@@ -205,7 +205,7 @@ only the prompt and the answer travel.
 - **Counting**: these runs leave no transcript on the computer, so the manager logs one `model_usage` line per
   completed purpose call on any route (`api`, `api_via_node`, `cli`): purpose, operation (Inbox event grouping is
   `inbox_group`), provider, model, result and input / output / cache read / cache write tokens (#10492). A call that
-  never ran (paused, nothing configured) is not logged. Extensions' `model.complete` calls are logged the same way, one
+  never ran (paused, nothing configured, a run held back for want of time: "Concurrency and time" below) is not logged. Extensions' `model.complete` calls are logged the same way, one
   line per request to the model. Each logged call is also added to the manager's `model_usage` table, one row per UTC
   day, purpose, route, provider and model (calls, failures, the four token sums); a write drops the days older than 60.
   `GET /api/v1/model-config` gives each listed purpose its last 7 UTC days as `usage` (its own calls and those of the
@@ -250,6 +250,20 @@ only the prompt and the answer travel.
   The call's deadline goes along as `timeout_ms` (2 minutes without one, at most 10); when the manager stops waiting it
   sends `rpc.cancel` and the node kills the run. Each run pays a CLI start (seconds) on top of the answer, so this suits
   background work.
+- **A run that cannot answer in time is not started** (#13443): agy's isolated start alone takes longer than a new
+  Agent's tab name may wait (8 s), so every such run used to be cancelled unanswered after its caller had waited the
+  whole time. The manager now remembers, per computer, launcher, model and effort, how fast a run there can be: the
+  fastest answer, else the longest wait that ended unanswered. A request whose caller cannot wait that long (for an
+  unanswered wait: not even a second longer) fails at once with "<launcher> on <computer> has lately taken N s or more
+  to answer…", localized: no CLI starts, it is not counted as a model call ("Counting"), the launcher's busy gate does
+  not see it, and a conversation title or an Agent's background name it held back counts as no failure and is asked
+  again later. A request that can wait long enough always runs, and its answer lowers what is expected; with nothing
+  known the first one tries; and what a launcher showed is forgotten an hour after its last run. Code: `runFloors` in
+  `server/internal/assistant/models_run.go`.
+- **To-do titles on a launcher wait longer** (#13443): a to-do a task opens is named by `todo.title` in the background
+  (`docs/assistant/todos.md`, "To-do titles"), within 15 s on an API connection and 50 s on a launcher, enough for a
+  cold CLI (agy answers in about 12–50 s), inside that naming's one minute. `POST /api/v1/todos/retitle`, which its
+  caller waits for, keeps 15 s.
 - **Purposes that call tools**: no API purpose uses the provider's native tool calling. Inbox event grouping
   (`inbox_group.go`) asks for its tools in its JSON answer and the manager runs them, so it works unchanged, each step
   within its 45 seconds; a step that runs out of time falls back to the rule grouping, as any failed model call does.

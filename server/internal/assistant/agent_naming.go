@@ -443,6 +443,9 @@ func (s *Service) tryAgentName(ctx context.Context, machine string, c proto.Sess
 			s.logf("agent naming: session=%q/%q reason=%s: %v", machine, c.SessionID, failureReason, err)
 		}
 	}
+	if failureReason == "launcher_too_slow" { // no call, so no failure: the lease taken before it spaces the tries
+		return true
+	}
 	if failureReason != "" {
 		r.Failures++
 		r.LastFailure = failureReason
@@ -528,6 +531,8 @@ func (s *Service) agentNameFromModel(ctx context.Context, machine, id string) (t
 		reply, err = s.purposeModel("inbox.triage").Chat(ctx, ai.Request{System: prompts.RenderAgentSessionName(), Messages: []ai.Message{{Role: ai.RoleUser, Content: prompts.RenderAgentSessionNameInput(prompts.AgentSessionNameInput{First: first, Recent: recent})}}, MaxTokens: 256, BoundOutput: true})
 		if ai.IsNotConfigured(err) {
 			reason = "model_not_configured"
+		} else if runHeldBack(err) { // the launcher takes longer than the naming may wait: nothing was asked
+			reason = "launcher_too_slow"
 		}
 	}
 	title = strings.TrimSpace(strings.Trim(strings.TrimSpace(reply.Text), "\"“”『』")) // i18n-ignore: punctuation normalization

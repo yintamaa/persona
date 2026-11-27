@@ -216,7 +216,7 @@ its name; a later native rename or `POST …/rename` wins again.
 | 503 | `assistant_offline` | The computer's manager is not connected (the hub answers) | true |
 | 503 | `names_unavailable` | The saved names could not be read; nothing was changed | true |
 | 503 | `canceled` | The manager stopped during the call | true |
-| 504 | `timeout` | The model did not answer in time | true |
+| 504 | `timeout` | The model did not answer in time, or Sorting runs on a launcher that lately took longer than the naming may wait, so it was not asked (`docs/assistant/model-config.md`, "Running API purposes on a launcher") | true |
 | 500 | `save_failed` | The new name could not be saved; nothing was changed | true |
 
 Failures are logged by the manager with a static reason code and the session's ids only (`agent naming: requested

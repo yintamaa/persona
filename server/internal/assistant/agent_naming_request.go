@@ -40,6 +40,7 @@ var agentNameRefusals = map[string]agentNameRefusal{
 	"model_call_failed":      {status: http.StatusBadGateway, code: "model_failed", retry: true, err: i18n.Err("assistant-agent_naming.model_failed")},
 	"dialogue_unavailable":   {status: http.StatusBadGateway, code: "dialogue_unavailable", retry: true, err: i18n.Err("assistant-agent_naming.dialogue_unavailable")},
 	"naming_timeout":         {status: http.StatusGatewayTimeout, code: "timeout", retry: true, err: i18n.Err("assistant-agent_naming.timeout")},
+	"launcher_too_slow":      {status: http.StatusGatewayTimeout, code: "timeout", retry: true, err: i18n.Err("assistant-agent_naming.timeout")},
 	"naming_canceled":        {status: http.StatusServiceUnavailable, code: "canceled", retry: true, err: i18n.Err("assistant-agent_naming.timeout")},
 }
 

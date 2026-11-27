@@ -412,6 +412,9 @@ func (s *Service) makeTitle(ctx context.Context, started time.Time, first, reply
 		})
 		cancel()
 		switch {
+		case err != nil && runHeldBack(err): // not asked: a stand-in until a turn when the launcher can answer in time
+			s.logf("title: %v", err)
+			return fallback(false)
 		case err != nil && ai.Transient(err) && !failed && ctx.Err() == nil:
 			s.logf("title: %v (asking once more)", err)
 			failed = true

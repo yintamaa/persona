@@ -308,7 +308,7 @@ func (c kbCountedModel) JSONMax(ctx context.Context, system, user string, maxTok
 	if st, ok := ctx.Value(kbLaneStatsKey{}).(*kbLaneStats); ok {
 		switch {
 		case errors.Is(err, context.Canceled): // the run was stopped (shutdown): neither answered nor failed
-		case ai.IsPaused(err):
+		case ai.IsPaused(err), runHeldBack(err): // not sent: a held connection, a launcher too slow for its time
 			st.putOff.Add(1)
 		case ai.IsNotConfigured(err): // no model set up: no call was made
 			st.mark(&st.unset, c.use)

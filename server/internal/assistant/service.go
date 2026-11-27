@@ -305,6 +305,7 @@ type Service struct {
 	conversationWrites   sync.RWMutex
 
 	modelPicks modelPickBook // model_pick.go
+	runFloors  runFloors     // models_run.go: how fast a launcher run can be, per computer, launcher, model and effort
 	// noBackground: there is no background supervisor whatever the setting says, so the main conversation gets its
 	// own tasks' signals. Only the tests of what the main conversation's own supervision does set it; the hub never does.
 	noBackground bool
